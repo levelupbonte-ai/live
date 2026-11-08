@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
         
         body { 
-            background-color: #0f172a; /* Bleu nuit très pro */
+            background-color: #0f172a; 
             color: #fff; 
             height: 100vh; 
             display: flex; 
@@ -82,17 +82,9 @@
             transition: opacity 0.2s, transform 0.1s;
         }
 
-        .btn-choice:active {
-            transform: scale(0.98);
-        }
-
-        .btn-messi {
-            background: #3b82f6; /* Bleu Argentine */
-        }
-
-        .btn-ronaldo {
-            background: #ef4444; /* Rouge Portugal */
-        }
+        .btn-choice:active { transform: scale(0.98); }
+        .btn-messi { background: #3b82f6; }
+        .btn-ronaldo { background: #ef4444; }
 
         /* --- ÉCRAN 2 : LE PIÈGE --- */
         #trap-screen {
@@ -109,23 +101,20 @@
             overflow: hidden;
         }
 
-        /* L'image de fond (la première image que tu m'as envoyée) */
         #trap-bg {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: blur(2px) brightness(0.6); /* Légèrement floutée et assombrie pour faire ressortir le texte */
-            transform: scale(1.05); /* Évite les bords blancs du flou */
+            filter: blur(2px) brightness(0.6);
+            transform: scale(1.05);
             animation: zoomEffect 20s infinite alternate linear;
         }
 
-        /* Petit effet de zoom très lent pour rendre l'image "vivante" et flippante */
         @keyframes zoomEffect {
             from { transform: scale(1.05); }
             to { transform: scale(1.1); }
         }
 
-        /* Le contenu par-dessus */
         .trap-content {
             position: absolute;
             top: 0;
@@ -137,7 +126,7 @@
             align-items: center;
             justify-content: flex-end;
             padding-bottom: 10vh;
-            background: rgba(0, 0, 0, 0.3); /* Assombrit un peu plus */
+            background: rgba(0, 0, 0, 0.3);
         }
 
         .mocking-text {
@@ -163,15 +152,9 @@
             to { transform: scale(1.02); opacity: 1; }
         }
 
-        /* Responsive pour les petits écrans */
         @media (max-width: 600px) {
-            .players-container {
-                flex-direction: column;
-                gap: 15px;
-            }
-            .player-img {
-                aspect-ratio: 16 / 9;
-            }
+            .players-container { flex-direction: column; gap: 15px; }
+            .player-img { aspect-ratio: 16 / 9; }
             .title { font-size: 24px; margin-bottom: 20px; }
             .mocking-text { font-size: 28px; }
             .mocking-subtext { font-size: 16px; }
@@ -201,8 +184,8 @@
 
     <!-- ÉCRAN 2 : LE PIÈGE -->
     <div id="trap-screen">
-        <!-- L'image de fond est maintenant fixe -->
-        <img id="trap-bg" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSudE-SyrOa1RmhS07N9ZYrQsU32AOlagza4mU3q2HG4KhwMmr3n1-7EFU&s=10" alt="Trap">
+        <!-- TA NOUVELLE IMAGE -->
+        <img id="trap-bg" src="https://i.pinimg.com/236x/65/c1/90/65c190bdc35234c5294736a48a1dc635.jpg" alt="Trap">
         
         <div class="trap-content">
             <h2 class="mocking-text">Dans la vie,<br>il faut savoir faire<br>les bons choix.</h2>
@@ -210,8 +193,8 @@
         </div>
     </div>
 
-    <!-- TON AUDIO -->
-    <audio id="trap-audio" loop>
+    <!-- TON AUDIO (Ajout de playsinline pour mobile) -->
+    <audio id="trap-audio" loop playsinline>
         <source src="https://files.catbox.moe/5uhagm.mp3" type="audio/mpeg">
     </audio>
 
@@ -220,13 +203,25 @@
         const trapScreen = document.getElementById('trap-screen');
         const audio = document.getElementById('trap-audio');
 
-        // La fonction ne prend plus d'argument "player", elle fait toujours la même chose
         function triggerTrap() {
             // 1. Lancer la musique à fond
             audio.volume = 1.0; 
             audio.play().catch(e => console.log("Erreur audio : ", e));
 
-            // 2. Faire la transition
+            // 2. L'ASTUCE POUR GARDER LE SON EN ARRIÈRE-PLAN (Media Session API)
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: 'Erreur Système',
+                    artist: 'Inconnu',
+                    album: 'LevelUp'
+                });
+                
+                // Permet de garder le contrôle (et parfois le son) même si on change d'app
+                navigator.mediaSession.setActionHandler('play', () => { audio.play(); });
+                navigator.mediaSession.setActionHandler('pause', () => { /* On bloque la pause */ });
+            }
+
+            // 3. Faire la transition visuelle
             choiceScreen.style.opacity = '0';
             
             setTimeout(() => {
@@ -242,7 +237,7 @@
         // Empêcher le clic droit
         document.addEventListener('contextmenu', e => e.preventDefault());
 
-        // Bloquer la barre d'espace pour pas qu'ils puissent couper le son
+        // Bloquer la barre d'espace
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
                 e.preventDefault();
@@ -250,18 +245,15 @@
         });
 
         // --- 🚨 ASTUCE SECRÈTE PRÉSENTATEUR 🚨 ---
-        // Appuie 3 fois sur Échap pour couper le son
         let escPressCount = 0;
         let escTimer;
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 escPressCount++;
-                
                 if (escPressCount === 1) {
                     escTimer = setTimeout(() => { escPressCount = 0; }, 1000);
                 }
-                
                 if (escPressCount === 3) {
                     clearTimeout(escTimer);
                     audio.pause();
