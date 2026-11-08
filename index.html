@@ -101,20 +101,16 @@
             overflow: hidden;
         }
 
+        /* L'IMAGE ORIGINALE (bien adaptée au mobile) */
         #trap-bg {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            filter: blur(2px) brightness(0.6);
-            transform: scale(1.05);
-            animation: zoomEffect 20s infinite alternate linear;
+            object-fit: contain; /* Affiche l'image entière sans la couper sur mobile */
+            background-color: #000; /* Remplit les vides avec du noir */
+            filter: blur(1px) brightness(0.7); /* Très léger flou pour l'ambiance */
         }
 
-        @keyframes zoomEffect {
-            from { transform: scale(1.05); }
-            to { transform: scale(1.1); }
-        }
-
+        /* Le contenu par-dessus */
         .trap-content {
             position: absolute;
             top: 0;
@@ -126,7 +122,7 @@
             align-items: center;
             justify-content: flex-end;
             padding-bottom: 10vh;
-            background: rgba(0, 0, 0, 0.3);
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.8) 100%);
         }
 
         .mocking-text {
@@ -136,7 +132,7 @@
             text-transform: uppercase;
             line-height: 1.2;
             padding: 0 20px;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            text-shadow: 0 4px 20px rgba(0,0,0,1);
             animation: pulseText 2s infinite alternate;
         }
 
@@ -144,7 +140,7 @@
             font-size: 20px;
             color: #cbd5e1;
             margin-top: 15px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            text-shadow: 0 2px 10px rgba(0,0,0,1);
         }
 
         @keyframes pulseText {
@@ -152,12 +148,14 @@
             to { transform: scale(1.02); opacity: 1; }
         }
 
+        /* Responsive pour mobile */
         @media (max-width: 600px) {
             .players-container { flex-direction: column; gap: 15px; }
             .player-img { aspect-ratio: 16 / 9; }
             .title { font-size: 24px; margin-bottom: 20px; }
             .mocking-text { font-size: 28px; }
             .mocking-subtext { font-size: 16px; }
+            .trap-content { padding-bottom: 15vh; } /* Remonte un peu le texte sur mobile */
         }
     </style>
 </head>
@@ -184,8 +182,8 @@
 
     <!-- ÉCRAN 2 : LE PIÈGE -->
     <div id="trap-screen">
-        <!-- TA NOUVELLE IMAGE -->
-        <img id="trap-bg" src="https://i.pinimg.com/236x/65/c1/90/65c190bdc35234c5294736a48a1dc635.jpg" alt="Trap">
+        <!-- L'ANCIENNE IMAGE EST DE RETOUR -->
+        <img id="trap-bg" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSudE-SyrOa1RmhS07N9ZYrQsU32AOlagza4mU3q2HG4KhwMmr3n1-7EFU&s=10" alt="Trap">
         
         <div class="trap-content">
             <h2 class="mocking-text">Dans la vie,<br>il faut savoir faire<br>les bons choix.</h2>
@@ -193,7 +191,7 @@
         </div>
     </div>
 
-    <!-- TON AUDIO (Ajout de playsinline pour mobile) -->
+    <!-- TON AUDIO -->
     <audio id="trap-audio" loop playsinline>
         <source src="https://files.catbox.moe/5uhagm.mp3" type="audio/mpeg">
     </audio>
@@ -208,20 +206,18 @@
             audio.volume = 1.0; 
             audio.play().catch(e => console.log("Erreur audio : ", e));
 
-            // 2. L'ASTUCE POUR GARDER LE SON EN ARRIÈRE-PLAN (Media Session API)
+            // 2. Garder le son actif en arrière-plan (Media Session API)
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: 'Erreur Système',
                     artist: 'Inconnu',
                     album: 'LevelUp'
                 });
-                
-                // Permet de garder le contrôle (et parfois le son) même si on change d'app
                 navigator.mediaSession.setActionHandler('play', () => { audio.play(); });
                 navigator.mediaSession.setActionHandler('pause', () => { /* On bloque la pause */ });
             }
 
-            // 3. Faire la transition visuelle
+            // 3. Transition visuelle
             choiceScreen.style.opacity = '0';
             
             setTimeout(() => {
